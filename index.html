@@ -124,7 +124,7 @@
 
   <section id="browseSection">
     <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="नाम या काम खोजें...">
+      <input type="text" id="searchInput" placeholder="नाम, गाँव/शहर या पिन कोड खोजें...">
       <select id="categoryFilter"></select>
     </div>
     <div id="listMsg"></div>
@@ -166,8 +166,14 @@
         </div>
       </div>
 
+      <label>गाँव / शहर का नाम *</label>
+      <input type="text" id="fTown" placeholder="जैसे: कोतमा, जैतहरी, अनूपपुर शहर">
+
       <label>पता / मोहल्ला *</label>
-      <input type="text" id="fAddress" placeholder="जैसे: मेन रोड, सतना">
+      <input type="text" id="fAddress" placeholder="जैसे: मेन रोड">
+
+      <label>पिन कोड *</label>
+      <input type="text" id="fPincode" placeholder="जैसे: 484224" maxlength="6">
 
       <label>संक्षिप्त जानकारी</label>
       <textarea id="fDesc" placeholder="आप क्या बेचते हैं या क्या सेवा देते हैं..."></textarea>
@@ -212,16 +218,18 @@ async function submitBusiness(){
   const phone = document.getElementById('fPhone').value.trim();
   const whatsapp = document.getElementById('fWhatsapp').value.trim();
   const address = document.getElementById('fAddress').value.trim();
+  const town = document.getElementById('fTown').value.trim();
+  const pincode = document.getElementById('fPincode').value.trim();
   const desc = document.getElementById('fDesc').value.trim();
   const msgEl = document.getElementById('addMsg');
 
-  if(!name || !phone || !address){
-    msgEl.innerHTML = '<div class="msg" style="background:#fbe1de;color:#8C3A1F;">कृपया नाम, फ़ोन नंबर और पता भरें।</div>';
+  if(!name || !phone || !address || !pincode || !town){
+    msgEl.innerHTML = '<div class="msg" style="background:#fbe1de;color:#8C3A1F;">कृपया नाम, फ़ोन नंबर, गाँव/शहर, पता और पिन कोड भरें।</div>';
     return;
   }
 
   const id = genId();
-  const data = {id, name, category, owner, phone, whatsapp, address, desc, createdAt: Date.now()};
+  const data = {id, name, category, owner, phone, whatsapp, town, address, pincode, desc, createdAt: Date.now()};
 
   try{
     const result = await window.storage.set('biz:' + id, JSON.stringify(data), true);
@@ -232,6 +240,8 @@ async function submitBusiness(){
       document.getElementById('fPhone').value='';
       document.getElementById('fWhatsapp').value='';
       document.getElementById('fAddress').value='';
+      document.getElementById('fTown').value='';
+      document.getElementById('fPincode').value='';
       document.getElementById('fDesc').value='';
       setTimeout(()=>{ switchTab('browse'); loadBusinesses(); }, 1200);
     }else{
@@ -282,7 +292,7 @@ function renderList(){
   const listMsg = document.getElementById('listMsg');
 
   let filtered = ALL_BUSINESSES.filter(b=>{
-    const matchesQ = !q || b.name.toLowerCase().includes(q) || (b.desc||'').toLowerCase().includes(q);
+    const matchesQ = !q || b.name.toLowerCase().includes(q) || (b.desc||'').toLowerCase().includes(q) || (b.town||'').toLowerCase().includes(q) || (b.pincode||'').includes(q);
     const matchesCat = !cat || b.category === cat;
     return matchesQ && matchesCat;
   });
@@ -305,7 +315,7 @@ function renderList(){
           </div>
         </div>
         ${b.desc ? `<p class="biz-desc">${escapeHtml(b.desc)}</p>` : ''}
-        <p class="biz-addr">${escapeHtml(b.address)}${b.owner ? ' · ' + escapeHtml(b.owner) : ''}</p>
+        <p class="biz-addr">${escapeHtml(b.town||'')}${b.town ? ' · ' : ''}${escapeHtml(b.address)}${b.pincode ? ' - ' + escapeHtml(b.pincode) : ''}${b.owner ? ' · ' + escapeHtml(b.owner) : ''}</p>
         <div class="biz-actions">
           <a class="call-btn" href="tel:${escapeHtml(b.phone)}">कॉल करें</a>
           ${waLink ? `<a class="wa-btn" href="${waLink}" target="_blank">WhatsApp</a>` : ''}
